@@ -1,0 +1,31 @@
+services:
+  # C# .NET 8 Backend API
+  - type: web
+    name: aquaflow-backend-csharp
+    runtime: docker
+    dockerfilePath: Dockerfile.backend_csharp
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8000
+      - key: PORT
+        value: 8000
+
+  # Frontend Dashboard (Static Site)
+  - type: web
+    name: aquaflow-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://aquaflow-backend-csharp.onrender.com
+      - key: VITE_WS_URL
+        value: wss://aquaflow-backend-csharp.onrender.com/ws

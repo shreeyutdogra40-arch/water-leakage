@@ -1,0 +1,20 @@
+# Multi-stage Dockerfile for C# (.NET 8) ASP.NET Core Backend
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY backend_csharp/AquaFlow.Server/AquaFlow.Server.csproj backend_csharp/AquaFlow.Server/
+RUN dotnet restore backend_csharp/AquaFlow.Server/AquaFlow.Server.csproj
+
+COPY backend_csharp/AquaFlow.Server/ backend_csharp/AquaFlow.Server/
+WORKDIR /src/backend_csharp/AquaFlow.Server
+RUN dotnet publish -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+
+ENV ASPNETCORE_URLS=http://0.0.0.0:8000
+ENV ASPNETCORE_ENVIRONMENT=Production
+EXPOSE 8000
+
+ENTRYPOINT ["dotnet", "AquaFlow.Server.dll"]

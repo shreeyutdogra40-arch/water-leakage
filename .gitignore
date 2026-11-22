@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build artifacts
+dist/
+build/
+frontend/dist/
+
+# Python
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*/.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# .NET / C#
+bin/
+obj/
+*/bin/
+*/obj/
+*.user
+*.suo
+.vs/
+.local/
+*/AquaFlow.Server/.local/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Archives and temporary files
+*.zip
+__MACOSX/
+Library/
+
+# OS generated
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables
+.env
+.env.*
+!.env.example
