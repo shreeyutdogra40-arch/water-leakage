@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import './eye-catchy-theme.css';
 
 @layer base {
   body {

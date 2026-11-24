@@ -57,7 +57,8 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     refreshSnapshot();
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const defaultWsUrl = window.location.port === '5173' ? 'ws://localhost:8000/ws' : `${protocol}//${window.location.host}/ws`;
+    const wsUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
 
     const connectWs = () => {
       try {

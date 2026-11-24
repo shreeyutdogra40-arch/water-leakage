@@ -12,8 +12,10 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure URL / port (default port 8000 to match FastAPI & Vite dev proxy)
-builder.WebHost.UseUrls(Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://0.0.0.0:8000");
+// Configure URL / port (supports Render, Railway, Docker PORT env var or defaults to 8000)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8000";
+var defaultUrl = $"http://0.0.0.0:{port}";
+builder.WebHost.UseUrls(Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? defaultUrl);
 
 // Add Controllers with snake_case JSON serialization
 builder.Services.AddControllers()
@@ -72,6 +74,23 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Robust detection of wwwroot directory across local dev, bin directory, or Docker deployment
+var contentRoot = builder.Environment.ContentRootPath;
+var baseDir = AppContext.BaseDirectory;
+var cwd = Directory.GetCurrentDirectory();
+var candidates = new[]
+{
+    Path.Combine(contentRoot, "wwwroot"),
+    Path.Combine(cwd, "wwwroot"),
+    Path.Combine(cwd, "backend_csharp", "AquaFlow.Server", "wwwroot"),
+    Path.Combine(baseDir, "wwwroot")
+};
+string? foundWebRoot = candidates.FirstOrDefault(p => Directory.Exists(p) && File.Exists(Path.Combine(p, "index.html")));
+if (foundWebRoot != null)
+{
+    builder.Environment.WebRootPath = foundWebRoot;
+}
+
 var app = builder.Build();
 
 // Enable Swagger
@@ -82,6 +101,10 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors("AllowAll");
+
+// Serve React SPA static files from wwwroot
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -132,8 +155,8 @@ app.Map("/ws", async (HttpContext context, AppWebSocketManager wsManager) =>
 // Map API Controllers
 app.MapControllers();
 
-// Root status endpoint
-app.MapGet("/", (IoTSimulatorBackgroundService simulator) => Results.Ok(new
+// System status & healthcheck endpoint
+app.MapGet("/api/status", (IoTSimulatorBackgroundService simulator) => Results.Ok(new
 {
     system = "AquaFlow Smart Community Water System (.NET 8 C# Edition)",
     version = "2.0.0",
@@ -143,6 +166,9 @@ app.MapGet("/", (IoTSimulatorBackgroundService simulator) => Results.Ok(new
     active_scenario = simulator.ActiveScenario,
     docs_url = "/swagger"
 }));
+
+// Fallback to React SPA index.html for client-side routing
+app.MapFallbackToFile("index.html");
 
 // Initialize database schema and seed data
 using (var scope = app.Services.CreateScope())
